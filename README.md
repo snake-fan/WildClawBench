@@ -447,7 +447,8 @@ WildClawBench builds on top of the excellent open-source agent ecosystem. We gra
 
 - **[OpenClaw](https://github.com/openclaw/openclaw)** 
 - **[Claw-Eval](https://github.com/claw-eval/claw-eval)**
-- **[PinchBench](https://github.com/pinchbench/skill)** 
+- **[PinchBench](https://github.com/pinchbench/skill)**
+- **[Hermes-Agent](https://github.com/nousresearch/hermes-agent)**
 
 ---
 
