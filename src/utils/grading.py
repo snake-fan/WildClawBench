@@ -185,7 +185,13 @@ def format_scores(task_id: str, scores: dict) -> str:
     lines.append("=" * 60)
     return "\n".join(lines)
 
-def print_summary(results: list[dict], category: str, output_dir: Path, model_name: str) -> None:
+def print_summary(
+    results: list[dict],
+    category: str,
+    output_dir: Path,
+    model_name: str,
+    run_timestamp: str | None = None,
+) -> None:
     print(f"\n{'#'*60}")
     print(f"  Summary Report — {category}")
     print(f"{'#'*60}")
@@ -241,7 +247,8 @@ def print_summary(results: list[dict], category: str, output_dir: Path, model_na
         print(f"    {r['task_id']:<55} {out_tok:>12} {cost:>11.4f}$")
     print(f"    {'Total':<55} {total_output_tokens:>12} {total_cost_usd:>11.4f}$")
 
-    summary_path = output_dir / category / f"summary_{model_name}.json"
+    timestamp_suffix = f"_{run_timestamp}" if run_timestamp else ""
+    summary_path = output_dir / category / f"summary_{model_name}{timestamp_suffix}.json"
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(
         json.dumps(results, indent=2, ensure_ascii=False, default=str),
@@ -287,7 +294,12 @@ def extract_usage_from_jsonl(jsonl_path: Path) -> dict:
     totals["cost_usd"] = round(totals["cost_usd"], 6)
     return totals
 
-def print_global_summary(results: list[dict], output_dir: Path, model_name: str) -> None:
+def print_global_summary(
+    results: list[dict],
+    output_dir: Path,
+    model_name: str,
+    run_timestamp: str | None = None,
+) -> None:
     print(f"\n{'#'*60}")
     print(f"  Global Summary Report — ALL CATEGORIES")
     print(f"{'#'*60}")
@@ -326,7 +338,8 @@ def print_global_summary(results: list[dict], output_dir: Path, model_name: str)
     total_cost    = sum(r.get("usage", {}).get("cost_usd",      0.0) for r in results)
     print(f"  Total output tokens: {total_out_tok}   Total cost: ${total_cost:.4f}")
 
-    summary_path = output_dir / f"summary_all_{model_name}.json"
+    timestamp_suffix = f"_{run_timestamp}" if run_timestamp else ""
+    summary_path = output_dir / f"summary_all_{model_name}{timestamp_suffix}.json"
     summary_path.write_text(
         json.dumps(
             {"global_avg": global_avg if total_tasks else None,

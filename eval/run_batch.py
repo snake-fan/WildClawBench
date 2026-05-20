@@ -385,6 +385,7 @@ def main() -> None:
 
     all_results: list[dict] = []
     safe_model_name = re.sub(r'[^a-zA-Z0-9.\-_]', '_', args.model)
+    run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     for category in categories:
         category_dir = TASKS_DIR / category
@@ -448,12 +449,12 @@ def main() -> None:
                         results.append({"task_id": tid, "scores": {}, "error": str(exc)})
 
         summary_label = f"{lobster['name']}_{safe_model_name}" if lobster else safe_model_name
-        print_summary(results, category, output_root, summary_label)
+        print_summary(results, category, output_root, summary_label, run_timestamp)
         all_results.extend(results)
 
     if len(categories) > 1 and all_results:
         summary_label = f"{lobster['name']}_{safe_model_name}" if lobster else safe_model_name
-        print_global_summary(all_results, output_root, summary_label)
+        print_global_summary(all_results, output_root, summary_label, run_timestamp)
 
 if __name__ == "__main__":
     main()
