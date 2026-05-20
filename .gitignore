@@ -25,12 +25,16 @@ __pycache__/
 Images/
 _workspace/
 workspace/
-script/
+script/*
+!script/run.sh
+!script/run_mementos_local.sh
 tools/
 output/
 output_sum/
 output_qwen/
 output*/
+.local_runs/
+.env.local
 .cache/
 .hfd/
 hfd.sh
@@ -40,3 +44,5 @@ cookies.txt
 output.rar
 output_qwen.rar
 *.rar
+
+tasks/

@@ -3,6 +3,12 @@
 # Prerequisites: Task data cloned from HuggingFace to workspace/
 # Usage: bash script/prepare.sh
 #
+# WSL / YouTube note:
+#   If YouTube asks "Sign in to confirm you're not a bot", export cookies from
+#   your Windows browser and put the file at the repository root as cookies.txt.
+#   You can also set a custom path:
+#       YTDLP_COOKIES=/path/to/cookies.txt bash script/prepare.sh
+#
 # This script performs the following:
 #   1. Download papers.tar (Productivity Flow tasks)
 #   2. Download 3 YouTube videos (football match, lecture, product launch)
@@ -13,6 +19,48 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# ─── Shared yt-dlp configuration ────────────────────────────────
+# Keep all YouTube-specific fixes in one place so every download uses them.
+YTDLP_COOKIES="${YTDLP_COOKIES:-cookies.txt}"
+YTDLP_COMMON_ARGS=(
+    --no-playlist
+    --merge-output-format mp4
+    --retries 10
+    --fragment-retries 10
+)
+
+if [ -f "$YTDLP_COOKIES" ]; then
+    echo "Using yt-dlp cookies: $YTDLP_COOKIES"
+    YTDLP_COMMON_ARGS+=(--cookies "$YTDLP_COOKIES")
+else
+    cat <<EOF_MSG
+WARNING: $YTDLP_COOKIES not found.
+YouTube may fail with: "Sign in to confirm you're not a bot".
+Fix:
+  1. Log in to YouTube in your Windows browser.
+  2. Export YouTube cookies as cookies.txt.
+  3. Put cookies.txt in this repository root, or run:
+     YTDLP_COOKIES=/path/to/cookies.txt bash script/prepare.sh
+EOF_MSG
+fi
+
+if command -v deno >/dev/null 2>&1; then
+    YTDLP_COMMON_ARGS+=(--js-runtimes deno --remote-components ejs:npm)
+else
+    cat <<EOF_MSG
+WARNING: deno not found in WSL.
+Install it if yt-dlp prints "No supported JavaScript runtime":
+  curl -fsSL https://deno.land/install.sh | sh
+  echo 'export DENO_INSTALL="$HOME/.deno"' >> ~/.bashrc
+  echo 'export PATH="$DENO_INSTALL/bin:$PATH"' >> ~/.bashrc
+  source ~/.bashrc
+EOF_MSG
+fi
+
+run_ytdlp() {
+    yt-dlp "${YTDLP_COMMON_ARGS[@]}" "$@"
+}
 
 echo "=========================================="
 echo "  WildClawBench Data Preparation"
@@ -33,8 +81,7 @@ mkdir -p "$TASK1_DIR" "$TASK2_DIR"
 
 if [ ! -f "$TASK1_DIR/first_half.mp4" ]; then
     echo "  downloading full match ..."
-    yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
-        --merge-output-format mp4 \
+    run_ytdlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
         -o "$TASK1_DIR/full_match.mp4" \
         "https://www.youtube.com/watch?v=93LPZJkCW2w"
 
@@ -75,8 +122,7 @@ mkdir -p "$TASK4_DIR"
 
 if [ ! -f "$TASK4_DIR/video.mp4" ]; then
     echo "  downloading lecture video ..."
-    yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
-        --merge-output-format mp4 \
+    run_ytdlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
         -o "$TASK4_DIR/video.mp4" \
         "https://www.youtube.com/watch?v=LPZh9BOjkQs"
     echo "  done: $TASK4_DIR/video.mp4"
@@ -98,7 +144,7 @@ mkdir -p "$TASK5_DIR" "$TASK11_DIR"
 
 if [ ! -f "$TASK5_DIR/recording.mp4" ]; then
     echo "  downloading product launch video ..."
-    yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
+    run_ytdlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" \
         -o "$TASK5_DIR/product_video.%(ext)s" \
         "https://www.youtube.com/watch?v=H3KnMyojEQU"
 
